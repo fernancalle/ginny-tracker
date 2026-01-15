@@ -38,6 +38,16 @@ Ginny is a personal finance app for the Dominican market. It connects to users' 
 3. **Monthly Stats** - Income vs expenses breakdown
 4. **Category Insights** - Visual breakdown by spending category
 5. **Pull-to-Refresh** - Sync new emails on demand
+6. **Bank Visualization** - View data by bank with "Mis Cuentas" section showing income/expenses per bank
+7. **Bank Filtering** - Filter transactions by specific Dominican bank (Banreservas, Popular, BHD León, etc.)
+
+## Supported Dominican Banks
+- Banreservas (green)
+- Banco Popular (blue)
+- BHD León (red)
+- Scotiabank
+- Banco Santa Cruz
+- Asociación Popular
 
 ## Design
 Inspired by fintech apps like Fintonic and Revolut with a clean, polished iOS-native aesthetic.

@@ -11,6 +11,14 @@ import {
 import { db } from "./db";
 import { eq, desc, and, gte, lte, sql } from "drizzle-orm";
 
+export interface BankSummary {
+  bankName: string;
+  transactionCount: number;
+  totalIncome: number;
+  totalExpenses: number;
+  balance: number;
+}
+
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
@@ -26,6 +34,9 @@ export interface IStorage {
   
   getMonthlyStats(userId: string, year: number, month: number): Promise<{ income: number; expenses: number }>;
   getCategoryBreakdown(userId: string, year: number, month: number): Promise<{ category: string; total: number }[]>;
+  
+  getBanksSummary(userId: string): Promise<BankSummary[]>;
+  getStatsByBank(userId: string, bankName: string, year: number, month: number): Promise<{ income: number; expenses: number; categories: { category: string; total: number }[] }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -142,6 +153,71 @@ export class DatabaseStorage implements IStorage {
     return Object.entries(categoryTotals)
       .map(([category, total]) => ({ category, total }))
       .sort((a, b) => b.total - a.total);
+  }
+
+  async getBanksSummary(userId: string): Promise<BankSummary[]> {
+    const allTransactions = await this.getTransactions(userId);
+    
+    const bankData: Record<string, { income: number; expenses: number; count: number }> = {};
+    
+    for (const txn of allTransactions) {
+      const bankName = txn.bankName || "Otro";
+      if (!bankData[bankName]) {
+        bankData[bankName] = { income: 0, expenses: 0, count: 0 };
+      }
+      
+      const amount = parseFloat(txn.amount);
+      bankData[bankName].count++;
+      
+      if (txn.type === 'income') {
+        bankData[bankName].income += amount;
+      } else {
+        bankData[bankName].expenses += amount;
+      }
+    }
+    
+    return Object.entries(bankData)
+      .map(([bankName, data]) => ({
+        bankName,
+        transactionCount: data.count,
+        totalIncome: data.income,
+        totalExpenses: data.expenses,
+        balance: data.income - data.expenses,
+      }))
+      .sort((a, b) => b.transactionCount - a.transactionCount);
+  }
+
+  async getStatsByBank(
+    userId: string, 
+    bankName: string, 
+    year: number, 
+    month: number
+  ): Promise<{ income: number; expenses: number; categories: { category: string; total: number }[] }> {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59);
+    
+    const txns = await this.getTransactionsByDateRange(userId, startDate, endDate);
+    const bankTxns = txns.filter(t => t.bankName === bankName);
+    
+    let income = 0;
+    let expenses = 0;
+    const categoryTotals: Record<string, number> = {};
+    
+    for (const txn of bankTxns) {
+      const amount = parseFloat(txn.amount);
+      if (txn.type === 'income') {
+        income += amount;
+      } else {
+        expenses += amount;
+        categoryTotals[txn.category] = (categoryTotals[txn.category] || 0) + amount;
+      }
+    }
+    
+    const categories = Object.entries(categoryTotals)
+      .map(([category, total]) => ({ category, total }))
+      .sort((a, b) => b.total - a.total);
+    
+    return { income, expenses, categories };
   }
 }
 

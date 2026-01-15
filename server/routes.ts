@@ -142,19 +142,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/banks", async (req, res) => {
+    try {
+      const user = await getOrCreateUser();
+      const banks = await storage.getBanksSummary(user.id);
+      res.json(banks);
+    } catch (error: any) {
+      console.error("Error getting banks:", error);
+      res.status(500).json({ error: error.message || "Failed to get banks" });
+    }
+  });
+
+  app.get("/api/stats/by-bank", async (req, res) => {
+    try {
+      const user = await getOrCreateUser();
+      const bankName = req.query.bank as string;
+      
+      const now = new Date();
+      const year = parseInt(req.query.year as string) || now.getFullYear();
+      const month = parseInt(req.query.month as string) || now.getMonth() + 1;
+      
+      const stats = await storage.getStatsByBank(user.id, bankName, year, month);
+      res.json(stats);
+    } catch (error: any) {
+      console.error("Error getting bank stats:", error);
+      res.status(500).json({ error: error.message || "Failed to get bank stats" });
+    }
+  });
+
   app.post("/api/transactions/demo", async (req, res) => {
     try {
       const user = await getOrCreateUser();
       
+      // Realistic demo data from popular Dominican banks
       const demoTransactions = [
-        { amount: "45000", type: "income", category: "salary", description: "Nómina Quincenal", bankName: "Banreservas", daysAgo: 2 },
-        { amount: "1500", type: "expense", category: "food", description: "Supermercado Nacional", bankName: "Banco Popular", daysAgo: 1 },
-        { amount: "850", type: "expense", category: "transport", description: "Uber viaje al trabajo", bankName: "BHD León", daysAgo: 1 },
-        { amount: "2500", type: "expense", category: "utilities", description: "Pago EDENORTE", bankName: "Banreservas", daysAgo: 3 },
-        { amount: "3200", type: "expense", category: "shopping", description: "Compra en Plaza Las Américas", bankName: "Banco Popular", daysAgo: 4 },
-        { amount: "1200", type: "expense", category: "entertainment", description: "Netflix y Spotify", bankName: "BHD León", daysAgo: 5 },
-        { amount: "5000", type: "income", category: "transfer", description: "Transferencia recibida", bankName: "Banreservas", daysAgo: 6 },
-        { amount: "800", type: "expense", category: "health", description: "Farmacia Carol", bankName: "Banco Popular", daysAgo: 7 },
+        // Banreservas - largest state bank
+        { amount: "65000", type: "income", category: "salary", description: "Nómina Quincenal - Empresa XYZ", bankName: "Banreservas", daysAgo: 1 },
+        { amount: "3500", type: "expense", category: "utilities", description: "Pago EDENORTE Luz", bankName: "Banreservas", daysAgo: 2 },
+        { amount: "1800", type: "expense", category: "utilities", description: "Pago CAASD Agua", bankName: "Banreservas", daysAgo: 3 },
+        { amount: "2200", type: "expense", category: "food", description: "Supermercado Bravo", bankName: "Banreservas", daysAgo: 5 },
+        
+        // Banco Popular - largest private bank
+        { amount: "4500", type: "expense", category: "shopping", description: "Compra Blue Mall", bankName: "Banco Popular", daysAgo: 1 },
+        { amount: "1200", type: "expense", category: "food", description: "Jumbo Supermercados", bankName: "Banco Popular", daysAgo: 2 },
+        { amount: "15000", type: "income", category: "transfer", description: "Transferencia recibida", bankName: "Banco Popular", daysAgo: 4 },
+        { amount: "890", type: "expense", category: "transport", description: "Parqueo Ágora Mall", bankName: "Banco Popular", daysAgo: 6 },
+        
+        // BHD León - major commercial bank
+        { amount: "2800", type: "expense", category: "entertainment", description: "Caribbean Cinemas", bankName: "BHD León", daysAgo: 1 },
+        { amount: "1500", type: "expense", category: "food", description: "Restaurante Mesón D'Bari", bankName: "BHD León", daysAgo: 3 },
+        { amount: "950", type: "expense", category: "transport", description: "Uber RD", bankName: "BHD León", daysAgo: 4 },
+        { amount: "5200", type: "expense", category: "shopping", description: "La Sirena Megacentro", bankName: "BHD León", daysAgo: 7 },
+        
+        // Scotiabank RD
+        { amount: "1100", type: "expense", category: "entertainment", description: "Netflix + HBO Max", bankName: "Scotiabank", daysAgo: 2 },
+        { amount: "2500", type: "expense", category: "utilities", description: "Claro Internet + Cable", bankName: "Scotiabank", daysAgo: 5 },
+        { amount: "8000", type: "income", category: "transfer", description: "Pago freelance", bankName: "Scotiabank", daysAgo: 8 },
+        
+        // Banco Santa Cruz
+        { amount: "750", type: "expense", category: "health", description: "Farmacia Carol", bankName: "Banco Santa Cruz", daysAgo: 1 },
+        { amount: "3200", type: "expense", category: "health", description: "Consulta médica HOMS", bankName: "Banco Santa Cruz", daysAgo: 6 },
+        
+        // Asociación Popular
+        { amount: "25000", type: "income", category: "salary", description: "Bono navideño", bankName: "Asociación Popular", daysAgo: 3 },
+        { amount: "1800", type: "expense", category: "food", description: "Nacional Supermercados", bankName: "Asociación Popular", daysAgo: 4 },
       ];
 
       let created = 0;

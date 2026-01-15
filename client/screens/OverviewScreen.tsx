@@ -15,10 +15,19 @@ import { BalanceCard, QuickStats, FinancialSummary } from "@/components/BalanceC
 import { TransactionItem } from "@/components/TransactionItem";
 import { SectionHeader } from "@/components/SectionHeader";
 import { CategoryBar } from "@/components/CategoryBar";
+import { BankCard } from "@/components/BankCard";
 import { EmptyState } from "@/components/EmptyState";
 import { SegmentedControl } from "@/components/SegmentedControl";
 import { BalanceCardSkeleton, TransactionSkeleton } from "@/components/SkeletonLoader";
 import { apiRequest } from "@/lib/query-client";
+
+interface BankSummary {
+  bankName: string;
+  transactionCount: number;
+  totalIncome: number;
+  totalExpenses: number;
+  balance: number;
+}
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import type { Transaction, User } from "@shared/schema";
 
@@ -49,6 +58,10 @@ export default function OverviewScreen() {
 
   const { data: categories } = useQuery<{ category: string; total: number }[]>({
     queryKey: ["/api/stats/categories"],
+  });
+
+  const { data: banks } = useQuery<BankSummary[]>({
+    queryKey: ["/api/banks"],
   });
 
   const syncMutation = useMutation({
@@ -89,6 +102,16 @@ export default function OverviewScreen() {
 
   const handleSeeAllTransactions = () => {
     navigation.navigate("Main", { screen: "TransactionsTab" } as any);
+  };
+
+  const handleBankPress = (bankName: string) => {
+    navigation.navigate("Main", { 
+      screen: "TransactionsTab", 
+      params: { 
+        screen: "Transactions", 
+        params: { filterBank: bankName } 
+      } 
+    } as any);
   };
 
   const recentTransactions = transactions?.slice(0, 5) || [];
@@ -193,8 +216,21 @@ export default function OverviewScreen() {
             </Animated.View>
           ) : null}
 
-          {recentTransactions.length > 0 ? (
+          {banks && banks.length > 0 ? (
             <Animated.View entering={FadeInDown.duration(400).delay(300)}>
+              <SectionHeader title="Mis Cuentas" showInfo />
+              {banks.slice(0, 3).map((bank) => (
+                <BankCard
+                  key={bank.bankName}
+                  bank={bank}
+                  onPress={() => handleBankPress(bank.bankName)}
+                />
+              ))}
+            </Animated.View>
+          ) : null}
+
+          {recentTransactions.length > 0 ? (
+            <Animated.View entering={FadeInDown.duration(400).delay(350)}>
               <SectionHeader
                 title="Movimientos Recientes"
                 actionLabel="Ver todos"

@@ -4,7 +4,7 @@ import TransactionsScreen from "@/screens/TransactionsScreen";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 
 export type TransactionsStackParamList = {
-  Transactions: undefined;
+  Transactions: { filterBank?: string } | undefined;
 };
 
 const Stack = createNativeStackNavigator<TransactionsStackParamList>();
