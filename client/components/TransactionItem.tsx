@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, View, Pressable } from "react-native";
+import { StyleSheet, View, Pressable, Platform } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import Animated, {
   useAnimatedStyle,
@@ -11,25 +11,26 @@ import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius } from "@/constants/theme";
+import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { formatCurrency, formatRelativeDate, getCategoryLabel, getCategoryIcon, getCategoryColor } from "@/lib/formatters";
 import type { Transaction } from "@shared/schema";
 
 interface TransactionItemProps {
   transaction: Transaction;
   onPress?: () => void;
+  showCard?: boolean;
 }
 
 const springConfig: WithSpringConfig = {
-  damping: 15,
-  mass: 0.3,
-  stiffness: 150,
+  damping: 20,
+  mass: 0.4,
+  stiffness: 200,
   overshootClamping: true,
 };
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export function TransactionItem({ transaction, onPress }: TransactionItemProps) {
+export function TransactionItem({ transaction, onPress, showCard = true }: TransactionItemProps) {
   const { theme, isDark } = useTheme();
   const scale = useSharedValue(1);
 
@@ -55,16 +56,21 @@ export function TransactionItem({ transaction, onPress }: TransactionItemProps) 
   const categoryColor = getCategoryColor(transaction.category, isDark);
   const iconName = getCategoryIcon(transaction.category) as any;
 
+  const containerStyle = [
+    styles.container,
+    showCard && { 
+      backgroundColor: theme.backgroundDefault,
+      ...(!isDark ? Shadows.card : {}),
+    },
+    animatedStyle,
+  ];
+
   return (
     <AnimatedPressable
       onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      style={[
-        styles.container,
-        { backgroundColor: theme.backgroundDefault },
-        animatedStyle,
-      ]}
+      style={containerStyle}
       testID={`transaction-item-${transaction.id}`}
     >
       <View style={[styles.iconContainer, { backgroundColor: categoryColor + "20" }]}>
@@ -76,12 +82,12 @@ export function TransactionItem({ transaction, onPress }: TransactionItemProps) 
           {transaction.description}
         </ThemedText>
         <View style={styles.metaRow}>
-          <ThemedText style={[styles.category, { color: theme.textSecondary }]}>
-            {getCategoryLabel(transaction.category)}
+          <ThemedText style={[styles.date, { color: theme.textSecondary }]}>
+            {formatRelativeDate(transaction.transactionDate)}
           </ThemedText>
           {transaction.bankName ? (
             <>
-              <ThemedText style={[styles.dot, { color: theme.textSecondary }]}>
+              <ThemedText style={[styles.dot, { color: theme.textTertiary }]}>
                 {" • "}
               </ThemedText>
               <ThemedText style={[styles.bank, { color: theme.textSecondary }]}>
@@ -92,19 +98,14 @@ export function TransactionItem({ transaction, onPress }: TransactionItemProps) 
         </View>
       </View>
       
-      <View style={styles.amountContainer}>
-        <ThemedText
-          style={[
-            styles.amount,
-            { color: isIncome ? theme.success : theme.expense },
-          ]}
-        >
-          {isIncome ? "+" : "-"}{formatCurrency(amount)}
-        </ThemedText>
-        <ThemedText style={[styles.date, { color: theme.textSecondary }]}>
-          {formatRelativeDate(transaction.transactionDate)}
-        </ThemedText>
-      </View>
+      <ThemedText
+        style={[
+          styles.amount,
+          { color: isIncome ? theme.success : theme.expense },
+        ]}
+      >
+        {isIncome ? "+" : "-"}{formatCurrency(amount)}
+      </ThemedText>
     </AnimatedPressable>
   );
 }
@@ -120,7 +121,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 44,
     height: 44,
-    borderRadius: BorderRadius.sm,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
     marginRight: Spacing.md,
@@ -130,7 +131,7 @@ const styles = StyleSheet.create({
     marginRight: Spacing.sm,
   },
   description: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "500",
     marginBottom: 2,
   },
@@ -138,7 +139,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  category: {
+  date: {
     fontSize: 13,
   },
   dot: {
@@ -147,15 +148,8 @@ const styles = StyleSheet.create({
   bank: {
     fontSize: 13,
   },
-  amountContainer: {
-    alignItems: "flex-end",
-  },
   amount: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "600",
-    marginBottom: 2,
-  },
-  date: {
-    fontSize: 12,
   },
 });

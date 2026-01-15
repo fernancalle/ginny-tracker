@@ -1,116 +1,250 @@
 import React from "react";
-import { StyleSheet, View } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  WithSpringConfig,
-} from "react-native-reanimated";
+import { StyleSheet, View, Platform } from "react-native";
+import { Feather } from "@expo/vector-icons";
+import Animated, { FadeIn } from "react-native-reanimated";
 
 import { ThemedText } from "@/components/ThemedText";
-import { Spacing, BorderRadius, Colors } from "@/constants/theme";
-import { formatCurrency } from "@/lib/formatters";
+import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
+import { formatCurrency, getMonthName } from "@/lib/formatters";
 import { useTheme } from "@/hooks/useTheme";
 
 interface BalanceCardProps {
   balance: number;
+  monthName?: string;
+  year?: number;
+}
+
+export function BalanceCard({ balance, monthName, year }: BalanceCardProps) {
+  const { theme, isDark } = useTheme();
+  const now = new Date();
+  const displayMonth = monthName || getMonthName(now.getMonth() + 1);
+  const displayYear = year || now.getFullYear();
+
+  return (
+    <Animated.View 
+      entering={FadeIn.duration(400)}
+      style={[
+        styles.container, 
+        { backgroundColor: theme.backgroundDefault },
+        !isDark && Shadows.card
+      ]}
+    >
+      <View style={styles.header}>
+        <ThemedText style={[styles.label, { color: theme.textSecondary }]}>
+          Balance al último mes
+        </ThemedText>
+        <Feather name="info" size={16} color={theme.textTertiary} />
+      </View>
+      
+      <View style={styles.dateRow}>
+        <Feather name="calendar" size={14} color={theme.textSecondary} />
+        <ThemedText style={[styles.dateText, { color: theme.textSecondary }]}>
+          {displayMonth} {displayYear}
+        </ThemedText>
+      </View>
+      
+      <ThemedText style={[styles.balance, { color: theme.text }]}>
+        {formatCurrency(balance)}
+      </ThemedText>
+    </Animated.View>
+  );
+}
+
+interface QuickStatsProps {
   income: number;
   expenses: number;
 }
 
-const springConfig: WithSpringConfig = {
-  damping: 15,
-  mass: 0.3,
-  stiffness: 150,
-  overshootClamping: true,
-};
-
-export function BalanceCard({ balance, income, expenses }: BalanceCardProps) {
+export function QuickStats({ income, expenses }: QuickStatsProps) {
   const { theme, isDark } = useTheme();
-  const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
 
   return (
-    <Animated.View style={[styles.container, animatedStyle]}>
-      <LinearGradient
-        colors={isDark ? [Colors.dark.primaryDark, Colors.dark.primary] : [Colors.light.primary, Colors.light.primaryDark]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradient}
-      >
-        <ThemedText style={styles.label} lightColor="#FFFFFF99" darkColor="#FFFFFF99">
-          Balance del Mes
+    <View style={styles.statsContainer}>
+      <View style={[styles.statCard, { backgroundColor: theme.backgroundDefault }, !isDark && Shadows.card]}>
+        <ThemedText style={[styles.statLabel, { color: theme.textSecondary }]}>
+          Ingresos
         </ThemedText>
-        <ThemedText style={styles.balance} lightColor="#FFFFFF" darkColor="#FFFFFF">
-          {formatCurrency(balance)}
+        <ThemedText style={[styles.statValue, { color: theme.success }]}>
+          {formatCurrency(income)}
         </ThemedText>
-        
-        <View style={styles.statsRow}>
-          <View style={styles.statItem}>
-            <ThemedText style={styles.statLabel} lightColor="#FFFFFF99" darkColor="#FFFFFF99">
-              Ingresos
-            </ThemedText>
-            <ThemedText style={styles.statValue} lightColor="#FFFFFF" darkColor="#FFFFFF">
-              +{formatCurrency(income)}
+      </View>
+      <View style={styles.statSpacer} />
+      <View style={[styles.statCard, { backgroundColor: theme.backgroundDefault }, !isDark && Shadows.card]}>
+        <ThemedText style={[styles.statLabel, { color: theme.textSecondary }]}>
+          Gastos
+        </ThemedText>
+        <ThemedText style={[styles.statValue, { color: theme.expense }]}>
+          {formatCurrency(expenses)}
+        </ThemedText>
+      </View>
+    </View>
+  );
+}
+
+interface FinancialSummaryProps {
+  income: number;
+  expenses: number;
+}
+
+export function FinancialSummary({ income, expenses }: FinancialSummaryProps) {
+  const { theme, isDark } = useTheme();
+  const total = income + expenses;
+  const spentPercentage = total > 0 ? Math.round((expenses / total) * 100) : 0;
+  const balancePercentage = 100 - spentPercentage;
+  const savedMore = income > 0 && expenses <= income * 0.8;
+
+  return (
+    <View style={[styles.summaryCard, { backgroundColor: theme.backgroundDefault }, !isDark && Shadows.card]}>
+      <View style={styles.summaryHeader}>
+        <ThemedText style={[styles.summaryTitle, { color: theme.text }]}>
+          Resumen de tus finanzas
+        </ThemedText>
+        <Feather name="info" size={16} color={theme.textTertiary} />
+      </View>
+      
+      <View style={styles.circlesContainer}>
+        <View style={styles.circleItem}>
+          <View style={[styles.circle, styles.circleSpent, { borderColor: theme.accent }]}>
+            <ThemedText style={[styles.circlePercent, { color: theme.accent }]}>
+              {spentPercentage}%
             </ThemedText>
           </View>
-          <View style={styles.divider} />
-          <View style={styles.statItem}>
-            <ThemedText style={styles.statLabel} lightColor="#FFFFFF99" darkColor="#FFFFFF99">
-              Gastos
-            </ThemedText>
-            <ThemedText style={styles.statValue} lightColor="#FFFFFF" darkColor="#FFFFFF">
-              -{formatCurrency(expenses)}
-            </ThemedText>
-          </View>
+          <ThemedText style={[styles.circleLabel, { color: theme.textSecondary }]}>
+            Gastado
+          </ThemedText>
         </View>
-      </LinearGradient>
-    </Animated.View>
+        
+        <View style={styles.circleItem}>
+          <View style={[styles.circle, styles.circleBalance, { borderColor: theme.accent, backgroundColor: theme.accent }]}>
+            <ThemedText style={[styles.circlePercent, { color: "#FFFFFF" }]}>
+              {balancePercentage}%
+            </ThemedText>
+          </View>
+          <ThemedText style={[styles.circleLabel, { color: theme.textSecondary }]}>
+            Balance
+          </ThemedText>
+        </View>
+      </View>
+      
+      {savedMore ? (
+        <View style={[styles.tipContainer, { backgroundColor: theme.accent + "15" }]}>
+          <View style={[styles.tipDot, { backgroundColor: theme.success }]} />
+          <ThemedText style={[styles.tipText, { color: theme.text }]}>
+            Ahorraste más del 20% de tus ingresos.
+          </ThemedText>
+        </View>
+      ) : null}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: BorderRadius.lg,
-    overflow: "hidden",
+    borderRadius: BorderRadius.md,
+    padding: Spacing.xl,
   },
-  gradient: {
-    padding: Spacing["2xl"],
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "500",
-    marginBottom: Spacing.xs,
-  },
-  balance: {
-    fontSize: 40,
-    fontWeight: "700",
-    marginBottom: Spacing.xl,
-  },
-  statsRow: {
+  header: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: Spacing.xs,
   },
-  statItem: {
+  label: {
+    fontSize: 15,
+    fontWeight: "500",
+  },
+  dateRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.md,
+  },
+  dateText: {
+    fontSize: 13,
+    marginLeft: Spacing.xs,
+  },
+  balance: {
+    fontSize: 36,
+    fontWeight: "700",
+    letterSpacing: -0.5,
+  },
+  statsContainer: {
+    flexDirection: "row",
+    marginTop: Spacing.md,
+  },
+  statCard: {
     flex: 1,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.lg,
+  },
+  statSpacer: {
+    width: Spacing.md,
   },
   statLabel: {
-    fontSize: 12,
-    fontWeight: "500",
+    fontSize: 13,
     marginBottom: Spacing.xs,
   },
   statValue: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: "600",
   },
-  divider: {
-    width: 1,
-    height: 32,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    marginHorizontal: Spacing.lg,
+  summaryCard: {
+    borderRadius: BorderRadius.md,
+    padding: Spacing.xl,
+    marginTop: Spacing.md,
+  },
+  summaryHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: Spacing.xl,
+  },
+  summaryTitle: {
+    fontSize: 17,
+    fontWeight: "600",
+  },
+  circlesContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: Spacing["4xl"],
+    marginBottom: Spacing.xl,
+  },
+  circleItem: {
+    alignItems: "center",
+  },
+  circle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 4,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing.sm,
+  },
+  circleSpent: {
+    backgroundColor: "transparent",
+  },
+  circleBalance: {},
+  circlePercent: {
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  circleLabel: {
+    fontSize: 13,
+  },
+  tipContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.sm,
+  },
+  tipDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: Spacing.sm,
+  },
+  tipText: {
+    fontSize: 14,
+    flex: 1,
   },
 });

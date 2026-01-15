@@ -40,11 +40,35 @@ Ginny is a personal finance app for the Dominican market. It connects to users' 
 5. **Pull-to-Refresh** - Sync new emails on demand
 
 ## Design
-- Primary color: #0A7EA4 (Deep Cyan)
-- Accent color: #FF6B35 (Coral)
+Inspired by fintech apps like Fintonic and Revolut with a clean, polished iOS-native aesthetic.
+
+### Colors
+- Background: #F5F5F7 (iOS system gray)
+- Cards: #FFFFFF with subtle shadows
+- Accent: #00D09C (Teal/Cyan)
+- Primary Text: #1C1C1E
+- Secondary Text: #8E8E93
+- Success/Income: #34C759 (iOS green)
+- Expense: #FF3B30 (iOS red)
+
+### Typography
+- SF Pro system font
+- Large Title: 34px Bold (balance displays)
+- Section Headers: 17px Semibold
+- Body: 17px Regular
+
+### Components
+- Card-based layout with 16px border radius
+- Subtle shadows on light mode
+- Segmented controls with pill-shaped buttons
+- Circular progress indicators for financial summary
+- Category bars with progress fill
+- Transaction items with colored category icons
+
+### UI Labels (Spanish)
+- Tabs: Inicio, Movimientos, Análisis, Perfil
+- Sections: Resumen de tus finanzas, Ingresos y Gastos, Top 3 Categorías
 - Dominican Peso (DOP) currency formatting
-- Spanish language UI
-- iOS-focused design with liquid glass aesthetics
 
 ## Commands
 - `npm run server:dev` - Start backend

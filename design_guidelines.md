@@ -2,165 +2,134 @@
 
 ## Brand Identity
 
-**Purpose**: Ginny eliminates financial chaos for Dominicans by automatically consolidating bank transactions from Gmail into one intelligent dashboard. It transforms scattered email notifications into actionable financial clarity.
+**Purpose**: Ginny eliminates financial chaos for Dominicans by automatically consolidating bank transactions from Gmail into one intelligent dashboard.
 
-**Aesthetic Direction**: **Bold/Editorial** - Think financial confidence meets magazine sophistication. High-contrast interface with purposeful data visualization. Clean but information-dense. Every number tells a story.
+**Aesthetic Direction**: Clean, polished fintech app inspired by Fintonic and Revolut. Minimal, card-based interface with clear hierarchy and native iOS feel.
 
-**Memorable Element**: Dynamic gradient cards that shift based on financial health (cool tones for savings mode, warm when spending high). The app FEELS alive and responsive to user behavior.
+## Design Principles
+
+1. **Clean Cards** - Subtle elevation, generous padding, rounded corners
+2. **Bold Numbers** - Large, prominent balance/amount displays
+3. **Clear Hierarchy** - Section headers, spacing creates visual groups
+4. **Native iOS Feel** - SF Pro fonts, system blur, subtle shadows
+5. **Minimal Color** - Strategic use of accent colors for emphasis
 
 ## Navigation Architecture
 
 **Root Navigation**: Tab Bar (4 tabs)
-- **Overview** (tab icon: pie-chart) - Dashboard with financial snapshot
-- **Transactions** (tab icon: list) - Detailed transaction history
-- **Insights** (tab icon: trending-up) - Charts and spending patterns
-- **Profile** (tab icon: user) - Settings and account management
-
-**Modals**:
-- Transaction detail view (slides up from transaction tap)
-- Category filter sheet (bottom sheet)
-- Gmail connection flow (full-screen modal during onboarding)
-
-## Screen-by-Screen Specifications
-
-### 1. Onboarding (Stack-Only Flow)
-**Purpose**: Explain value and connect Gmail account.
-
-**Screens**:
-- Welcome screen with hero illustration (welcome-hero.png)
-- Benefits screen (3 cards: "Auto-sync", "Smart categorization", "Clear insights")
-- Gmail connection screen with "Connect Gmail" button
-- Permission explanation with privacy assurance
-
-**Layout**: Centered content, large illustrations, bottom CTA button with safe area inset (bottom: insets.bottom + Spacing.xl)
-
-### 2. Overview Tab (Home)
-**Purpose**: At-a-glance financial health.
-
-**Header**: Transparent, custom greeting ("Hola, [Name]"), right button: notification bell
-
-**Content** (Scrollable):
-- Balance card (gradient background, large balance number)
-- Quick stats row (3 small cards: This month income, expenses, difference)
-- Recent transactions list (5 items max, "See all" link to Transactions tab)
-- Spending by category chart (horizontal bar chart)
-
-**Safe Area**: Top: headerHeight + Spacing.xl, Bottom: tabBarHeight + Spacing.xl
-
-**Empty State**: Show onboarding illustration with "Connect Gmail to get started"
-
-### 3. Transactions Tab
-**Purpose**: Complete transaction history with search/filter.
-
-**Header**: Default navigation, title "Transactions", right button: filter icon
-
-**Content**: 
-- Search bar (sticky below header)
-- Segmented control (All / Income / Expenses)
-- List of transactions grouped by date
-  - Each item: Bank logo (placeholder circle), description, category tag, amount (green for income, red for expenses)
-
-**Safe Area**: Top: Spacing.xl (non-transparent header), Bottom: tabBarHeight + Spacing.xl
-
-**Empty State**: Illustration (empty-transactions.png) with "No transactions yet. Pull to refresh after connecting Gmail."
-
-### 4. Insights Tab
-**Purpose**: Visual spending analysis.
-
-**Header**: Transparent, title "Insights", right button: date range picker icon
-
-**Content** (Scrollable):
-- Month selector (horizontal scroll of month chips)
-- Spending trend line chart (7-day or 30-day)
-- Category breakdown (donut chart with legend)
-- Top spending categories (ranked list with progress bars)
-
-**Safe Area**: Top: headerHeight + Spacing.xl, Bottom: tabBarHeight + Spacing.xl
-
-**Empty State**: Illustration (empty-insights.png) with "Not enough data yet. Check back after a few transactions."
-
-### 5. Profile Tab
-**Purpose**: Account management and settings.
-
-**Header**: Default, title "Profile"
-
-**Content** (Scrollable):
-- User info card (avatar, name, email)
-- Settings list:
-  - Connected Accounts (shows Gmail status)
-  - Notifications
-  - Currency (DOP default)
-  - About Ginny
-  - Log Out (red text)
-
-**Safe Area**: Top: Spacing.xl, Bottom: tabBarHeight + Spacing.xl
-
-### 6. Transaction Detail Modal
-**Purpose**: Full transaction details.
-
-**Layout**: Modal sheet (not full screen), rounded top corners, drag handle
-- Bank name and logo
-- Full description
-- Amount (large, colored)
-- Category (editable via dropdown)
-- Date and time
-- Close button (header left)
+- **Inicio** (tab icon: home) - Dashboard with financial snapshot
+- **Movimientos** (tab icon: list) - Transaction history
+- **Análisis** (tab icon: bar-chart-2) - Charts and insights
+- **Perfil** (tab icon: user) - Settings and account
 
 ## Color Palette
 
-**Primary**: `#0A7EA4` (Deep Cyan) - Trust with energy, evokes Caribbean waters
-**Primary Dark**: `#065A7A`
-**Accent**: `#FF6B35` (Coral) - Warmth, attention for important actions
+### Light Mode
+- **Background**: `#F5F5F7` (iOS system gray 6)
+- **Card Background**: `#FFFFFF`
+- **Primary Text**: `#1C1C1E`
+- **Secondary Text**: `#8E8E93`
+- **Accent**: `#00D09C` (Teal/Cyan - like Fintonic)
+- **Primary Blue**: `#1A2B4B` (Dark navy for headers)
+- **Success/Income**: `#34C759` (iOS green)
+- **Expense**: `#FF3B30` (iOS red)
+- **Card Shadow**: 0 2px 8px rgba(0,0,0,0.08)
 
-**Background**: `#F8F9FA` (Off-white)
-**Surface**: `#FFFFFF`
-**Surface Elevated**: `#FFFFFF` with shadowOpacity 0.08
-
-**Text Primary**: `#1A1A1A`
-**Text Secondary**: `#6B7280`
-
-**Semantic**:
-- Success/Income: `#10B981` (Green)
-- Expense: `#EF4444` (Red)
-- Warning: `#F59E0B` (Amber)
-
-**Gradient (for balance card)**: `#0A7EA4` to `#065A7A` (vertical)
+### Dark Mode
+- **Background**: `#000000` (Pure black like Revolut)
+- **Card Background**: `#1C1C1E` (iOS dark gray)
+- **Primary Text**: `#FFFFFF`
+- **Secondary Text**: `#8E8E93`
+- **Accent**: `#00D09C`
+- **Success/Income**: `#30D158`
+- **Expense**: `#FF453A`
 
 ## Typography
 
-**Font**: SF Pro (iOS system font) for data clarity and performance.
+Using SF Pro (system font) for maximum iOS native feel:
 
-**Type Scale**:
-- Display (Balance numbers): 48px, Bold
-- H1 (Screen titles): 28px, Bold
-- H2 (Section headers): 20px, Semibold
-- Body: 16px, Regular
-- Caption (Meta info): 14px, Regular
-- Small (Tags): 12px, Medium
+- **Large Title**: 34px, Bold (Balance displays)
+- **Title 1**: 28px, Bold (Screen titles)
+- **Title 2**: 22px, Bold (Section headers)
+- **Title 3**: 20px, Semibold (Card titles)
+- **Body**: 17px, Regular (Standard text)
+- **Callout**: 16px, Regular
+- **Subhead**: 15px, Regular
+- **Footnote**: 13px, Regular (Secondary info)
+- **Caption**: 12px, Regular (Meta text)
 
-## Visual Design
+## Spacing
 
-**Touchable Feedback**:
-- Cards: Slight scale down (0.98) on press
-- List items: Background flash to `#F3F4F6`
-- Buttons: Opacity 0.8 on press
+- **xs**: 4px
+- **sm**: 8px
+- **md**: 12px
+- **lg**: 16px
+- **xl**: 20px
+- **2xl**: 24px
+- **3xl**: 32px
+- **4xl**: 40px
 
-**Floating Button** (if added later for manual entry):
-- shadowOffset: {width: 0, height: 2}
-- shadowOpacity: 0.10
-- shadowRadius: 2
+## Component Specifications
 
-**Icons**: Use Feather icons from @expo/vector-icons throughout.
+### Cards
+- Border radius: 16px
+- Padding: 20px
+- Shadow (light): 0 2px 8px rgba(0,0,0,0.08)
+- No border
 
-**Cards**: 16px border radius, subtle shadow (shadowOpacity: 0.05, shadowRadius: 4, height: 2)
+### Balance Card (Hero)
+- Full width
+- Large balance number (34-40px, Bold)
+- Subtle gradient or solid white background
+- Month/period indicator with icon
 
-## Assets to Generate
+### Quick Stats Row
+- Horizontal layout, equal width cards
+- Icon + Label + Amount stacked
+- Circular progress indicators optional
 
-1. **icon.png** - App icon featuring stylized "G" with gradient (Primary to Accent)
-2. **splash-icon.png** - Same as icon, centered on Primary color background
-3. **welcome-hero.png** - Illustration of organized financial documents flowing into phone, Primary + Accent colors
-4. **empty-transactions.png** - Minimal illustration of inbox with checkmark, Primary color
-5. **empty-insights.png** - Minimal chart/graph illustration, light gray with Primary accent
-6. **avatar-preset.png** - Generic user avatar (circular, Primary background, white "G" initial)
+### Transaction Items
+- Category icon (44px circle with colored background)
+- Description + Bank name
+- Amount aligned right
+- Date/time below amount
+- Subtle separator or spacing between items
 
-**Asset Style**: Flat, modern illustrations with 2-3 colors max (Primary, Accent, off-white). Clean lines, geometric shapes, no gradients in illustrations (except app icon).
+### Segmented Control
+- Pill-shaped buttons
+- Active: Filled with accent color
+- Inactive: Light gray background
+
+### Tab Bar
+- Standard iOS tab bar
+- Active: Accent color
+- Inactive: Gray
+- Labels below icons
+
+## Screen Layouts
+
+### Home/Overview
+1. Greeting header ("Hola, [Name]")
+2. Period selector (Segmented: "Último mes" / "Año en curso")
+3. Balance card with month indicator
+4. Financial summary section with circular charts
+5. Income/Expenses quick stats
+6. Top categories preview
+
+### Transactions
+1. Search bar
+2. Filter tabs (Todas / Ingresos / Gastos)
+3. Transaction list grouped by date
+4. Each item: Icon, description, category, amount
+
+### Insights
+1. Month selector (horizontal scroll)
+2. Summary card (Income vs Expenses)
+3. Spending trend chart
+4. Category breakdown with progress bars
+
+### Profile
+1. User card with avatar
+2. Settings list items with icons
+3. Sync status card
+4. Logout option

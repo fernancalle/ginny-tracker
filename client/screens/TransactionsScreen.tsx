@@ -14,6 +14,7 @@ import { TransactionItem } from "@/components/TransactionItem";
 import { EmptyState } from "@/components/EmptyState";
 import { TransactionSkeleton } from "@/components/SkeletonLoader";
 import { ThemedText } from "@/components/ThemedText";
+import { SegmentedControl } from "@/components/SegmentedControl";
 import { apiRequest } from "@/lib/query-client";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 import type { Transaction } from "@shared/schema";
@@ -22,17 +23,17 @@ import emptyTransactionsImage from "../../assets/images/empty-transactions.png";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-type FilterType = "all" | "income" | "expense";
+const FILTER_OPTIONS = ["Todas", "Ingresos", "Gastos"];
 
 export default function TransactionsScreen() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const navigation = useNavigation<NavigationProp>();
   const queryClient = useQueryClient();
   
   const [searchQuery, setSearchQuery] = useState("");
-  const [filter, setFilter] = useState<FilterType>("all");
+  const [filterIndex, setFilterIndex] = useState(0);
 
   const { data: transactions, isLoading } = useQuery<Transaction[]>({
     queryKey: ["/api/transactions"],
@@ -79,8 +80,10 @@ export default function TransactionsScreen() {
     
     let result = transactions;
     
-    if (filter !== "all") {
-      result = result.filter((t) => t.type === filter);
+    if (filterIndex === 1) {
+      result = result.filter((t) => t.type === "income");
+    } else if (filterIndex === 2) {
+      result = result.filter((t) => t.type === "expense");
     }
     
     if (searchQuery.trim()) {
@@ -94,31 +97,7 @@ export default function TransactionsScreen() {
     }
     
     return result;
-  }, [transactions, filter, searchQuery]);
-
-  const FilterButton = ({ type, label }: { type: FilterType; label: string }) => {
-    const isActive = filter === type;
-    return (
-      <Pressable
-        onPress={() => setFilter(type)}
-        style={[
-          styles.filterButton,
-          {
-            backgroundColor: isActive ? theme.primary : theme.backgroundSecondary,
-          },
-        ]}
-      >
-        <ThemedText
-          style={[
-            styles.filterButtonText,
-            { color: isActive ? "#FFFFFF" : theme.textSecondary },
-          ]}
-        >
-          {label}
-        </ThemedText>
-      </Pressable>
-    );
-  };
+  }, [transactions, filterIndex, searchQuery]);
 
   const renderHeader = () => (
     <View style={styles.header}>
@@ -131,22 +110,24 @@ export default function TransactionsScreen() {
         <Feather name="search" size={18} color={theme.textSecondary} />
         <TextInput
           style={[styles.searchInput, { color: theme.text }]}
-          placeholder="Buscar transacciones..."
+          placeholder="Buscar movimientos..."
           placeholderTextColor={theme.textSecondary}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
         {searchQuery ? (
           <Pressable onPress={() => setSearchQuery("")} hitSlop={8}>
-            <Feather name="x" size={18} color={theme.textSecondary} />
+            <Feather name="x-circle" size={18} color={theme.textSecondary} />
           </Pressable>
         ) : null}
       </View>
       
-      <View style={styles.filterRow}>
-        <FilterButton type="all" label="Todas" />
-        <FilterButton type="income" label="Ingresos" />
-        <FilterButton type="expense" label="Gastos" />
+      <View style={styles.filterContainer}>
+        <SegmentedControl
+          segments={FILTER_OPTIONS}
+          selectedIndex={filterIndex}
+          onChange={setFilterIndex}
+        />
       </View>
     </View>
   );
@@ -165,10 +146,10 @@ export default function TransactionsScreen() {
     return (
       <EmptyState
         image={emptyTransactionsImage}
-        title={searchQuery ? "Sin resultados" : "Sin transacciones"}
+        title={searchQuery ? "Sin resultados" : "Sin movimientos"}
         message={
           searchQuery
-            ? "No encontramos transacciones que coincidan con tu búsqueda."
+            ? "No encontramos movimientos que coincidan con tu búsqueda."
             : "Sincroniza tus correos o carga datos de demostración."
         }
         actionLabel={searchQuery ? undefined : "Cargar demo"}
@@ -203,7 +184,7 @@ export default function TransactionsScreen() {
         <RefreshControl
           refreshing={syncMutation.isPending}
           onRefresh={handleRefresh}
-          tintColor={theme.primary}
+          tintColor={theme.accent}
         />
       }
     />
@@ -228,17 +209,7 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.sm,
     marginRight: Spacing.sm,
   },
-  filterRow: {
-    flexDirection: "row",
-    gap: Spacing.sm,
-  },
-  filterButton: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.full,
-  },
-  filterButtonText: {
-    fontSize: 14,
-    fontWeight: "500",
+  filterContainer: {
+    marginTop: Spacing.xs,
   },
 });

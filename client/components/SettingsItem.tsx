@@ -31,6 +31,7 @@ export function SettingsItem({
     onPress?.();
   };
 
+  const iconColor = destructive ? theme.expense : theme.accent;
   const textColor = destructive ? theme.expense : theme.text;
 
   return (
@@ -38,28 +39,28 @@ export function SettingsItem({
       onPress={handlePress}
       style={({ pressed }) => [
         styles.container,
-        { backgroundColor: pressed ? theme.backgroundSecondary : theme.backgroundDefault },
+        pressed && { backgroundColor: theme.backgroundSecondary },
       ]}
     >
-      <View style={[styles.iconContainer, { backgroundColor: destructive ? theme.expense + "20" : theme.primary + "20" }]}>
+      <View style={[styles.iconContainer, { backgroundColor: iconColor + "15" }]}>
         <Feather
           name={icon as any}
           size={18}
-          color={destructive ? theme.expense : theme.primary}
+          color={iconColor}
         />
       </View>
       <View style={styles.content}>
         <ThemedText style={[styles.label, { color: textColor }]}>
           {label}
         </ThemedText>
-        {value ? (
-          <ThemedText style={[styles.value, { color: theme.textSecondary }]}>
-            {value}
-          </ThemedText>
-        ) : null}
       </View>
+      {value ? (
+        <ThemedText style={[styles.value, { color: theme.textSecondary }]}>
+          {value}
+        </ThemedText>
+      ) : null}
       {showChevron ? (
-        <Feather name="chevron-right" size={20} color={theme.textSecondary} />
+        <Feather name="chevron-right" size={18} color={theme.textTertiary} />
       ) : null}
     </Pressable>
   );
@@ -69,14 +70,13 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.md,
-    marginBottom: Spacing.xs,
+    padding: Spacing.md,
+    paddingVertical: Spacing.md,
   },
   iconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: BorderRadius.sm,
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
     marginRight: Spacing.md,
@@ -86,10 +86,9 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    fontWeight: "500",
   },
   value: {
-    fontSize: 14,
-    marginTop: 2,
+    fontSize: 15,
+    marginRight: Spacing.sm,
   },
 });

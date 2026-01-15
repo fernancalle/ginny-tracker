@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, Image, Alert } from "react-native";
+import { View, StyleSheet, Image, Alert, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useQuery } from "@tanstack/react-query";
@@ -7,7 +7,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius } from "@/constants/theme";
+import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { ThemedText } from "@/components/ThemedText";
 import { SettingsItem } from "@/components/SettingsItem";
 import { Card } from "@/components/Card";
@@ -19,7 +19,7 @@ import avatarPreset from "../../assets/images/avatar-preset.png";
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
 
   const { data: user, isLoading: loadingUser } = useQuery<User>({
     queryKey: ["/api/user"],
@@ -89,10 +89,10 @@ export default function ProfileScreen() {
       scrollIndicatorInsets={{ bottom: insets.bottom }}
     >
       <Animated.View entering={FadeInDown.duration(400).delay(100)}>
-        <Card style={styles.profileCard}>
+        <View style={[styles.profileCard, { backgroundColor: theme.backgroundDefault }, !isDark && Shadows.card]}>
           {loadingUser ? (
             <View style={styles.profileContent}>
-              <SkeletonLoader width={80} height={80} borderRadius={40} />
+              <SkeletonLoader width={72} height={72} borderRadius={36} />
               <View style={styles.profileInfo}>
                 <SkeletonLoader width={150} height={20} style={{ marginBottom: 8 }} />
                 <SkeletonLoader width={200} height={16} />
@@ -102,14 +102,14 @@ export default function ProfileScreen() {
             <View style={styles.profileContent}>
               <Image source={avatarPreset} style={styles.avatar} />
               <View style={styles.profileInfo}>
-                <ThemedText type="h2">{user?.name || "Usuario"}</ThemedText>
+                <ThemedText style={styles.profileName}>{user?.name || "Usuario"}</ThemedText>
                 <ThemedText style={[styles.email, { color: theme.textSecondary }]}>
                   {user?.email}
                 </ThemedText>
               </View>
             </View>
           )}
-        </Card>
+        </View>
       </Animated.View>
 
       <Animated.View entering={FadeInDown.duration(400).delay(200)}>
@@ -117,23 +117,27 @@ export default function ProfileScreen() {
           CONFIGURACIÓN
         </ThemedText>
         
-        <SettingsItem
-          icon="mail"
-          label="Cuentas Conectadas"
-          value={user?.email ? "Gmail conectado" : "No conectado"}
-          onPress={handleConnectedAccounts}
-        />
-        <SettingsItem
-          icon="bell"
-          label="Notificaciones"
-          onPress={handleNotifications}
-        />
-        <SettingsItem
-          icon="dollar-sign"
-          label="Moneda"
-          value="DOP (Peso Dominicano)"
-          onPress={handleCurrency}
-        />
+        <View style={[styles.settingsGroup, { backgroundColor: theme.backgroundDefault }, !isDark && Shadows.card]}>
+          <SettingsItem
+            icon="mail"
+            label="Cuentas Conectadas"
+            value={user?.email ? "Gmail" : "No conectado"}
+            onPress={handleConnectedAccounts}
+          />
+          <View style={[styles.separator, { backgroundColor: theme.separator }]} />
+          <SettingsItem
+            icon="bell"
+            label="Notificaciones"
+            onPress={handleNotifications}
+          />
+          <View style={[styles.separator, { backgroundColor: theme.separator }]} />
+          <SettingsItem
+            icon="dollar-sign"
+            label="Moneda"
+            value="DOP"
+            onPress={handleCurrency}
+          />
+        </View>
       </Animated.View>
 
       <Animated.View entering={FadeInDown.duration(400).delay(300)}>
@@ -141,13 +145,14 @@ export default function ProfileScreen() {
           SINCRONIZACIÓN
         </ThemedText>
         
-        <Card style={styles.syncCard}>
+        <View style={[styles.syncCard, { backgroundColor: theme.backgroundDefault }, !isDark && Shadows.card]}>
           <View style={styles.syncRow}>
             <ThemedText style={[styles.syncLabel, { color: theme.textSecondary }]}>
               Última sincronización
             </ThemedText>
             <ThemedText style={styles.syncValue}>{lastSyncText}</ThemedText>
           </View>
+          <View style={[styles.separator, { backgroundColor: theme.separator }]} />
           <View style={styles.syncRow}>
             <ThemedText style={[styles.syncLabel, { color: theme.textSecondary }]}>
               Correos procesados
@@ -156,7 +161,7 @@ export default function ProfileScreen() {
               {syncStatus?.syncedEmailCount || 0}
             </ThemedText>
           </View>
-        </Card>
+        </View>
       </Animated.View>
 
       <Animated.View entering={FadeInDown.duration(400).delay(400)}>
@@ -164,18 +169,21 @@ export default function ProfileScreen() {
           INFORMACIÓN
         </ThemedText>
         
-        <SettingsItem
-          icon="info"
-          label="Sobre Ginny"
-          onPress={handleAbout}
-        />
-        <SettingsItem
-          icon="log-out"
-          label="Cerrar Sesión"
-          onPress={handleLogout}
-          destructive
-          showChevron={false}
-        />
+        <View style={[styles.settingsGroup, { backgroundColor: theme.backgroundDefault }, !isDark && Shadows.card]}>
+          <SettingsItem
+            icon="info"
+            label="Sobre Ginny"
+            onPress={handleAbout}
+          />
+          <View style={[styles.separator, { backgroundColor: theme.separator }]} />
+          <SettingsItem
+            icon="log-out"
+            label="Cerrar Sesión"
+            onPress={handleLogout}
+            destructive
+            showChevron={false}
+          />
+        </View>
       </Animated.View>
     </KeyboardAwareScrollViewCompat>
   );
@@ -183,34 +191,49 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   profileCard: {
-    marginBottom: Spacing["2xl"],
+    borderRadius: BorderRadius.md,
+    padding: Spacing.xl,
+    marginBottom: Spacing.lg,
   },
   profileContent: {
     flexDirection: "row",
     alignItems: "center",
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
   },
   profileInfo: {
     marginLeft: Spacing.lg,
     flex: 1,
   },
+  profileName: {
+    fontSize: 20,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
   email: {
     fontSize: 14,
-    marginTop: 4,
   },
   sectionTitle: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: "600",
     letterSpacing: 0.5,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
     marginTop: Spacing.lg,
     marginLeft: Spacing.xs,
   },
+  settingsGroup: {
+    borderRadius: BorderRadius.md,
+    overflow: "hidden",
+  },
+  separator: {
+    height: StyleSheet.hairlineWidth,
+    marginLeft: 60,
+  },
   syncCard: {
+    borderRadius: BorderRadius.md,
     padding: Spacing.lg,
   },
   syncRow: {
@@ -220,10 +243,10 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
   },
   syncLabel: {
-    fontSize: 14,
+    fontSize: 15,
   },
   syncValue: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "500",
   },
 });

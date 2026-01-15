@@ -1,9 +1,9 @@
 import React from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, Platform } from "react-native";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius } from "@/constants/theme";
+import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { formatCompactCurrency, getCategoryLabel, getCategoryColor } from "@/lib/formatters";
 
 interface CategoryBarProps {
@@ -17,7 +17,7 @@ export function CategoryBar({ category, amount, percentage }: CategoryBarProps) 
   const color = getCategoryColor(category, isDark);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.backgroundDefault }, !isDark && Shadows.card]}>
       <View style={styles.header}>
         <View style={styles.labelRow}>
           <View style={[styles.dot, { backgroundColor: color }]} />
@@ -46,30 +46,33 @@ export function CategoryBar({ category, amount, percentage }: CategoryBarProps) 
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.lg,
+    marginBottom: Spacing.sm,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.sm,
   },
   labelRow: {
     flexDirection: "row",
     alignItems: "center",
   },
   dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     marginRight: Spacing.sm,
   },
   label: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "500",
   },
   amount: {
-    fontSize: 13,
+    fontSize: 14,
+    fontWeight: "500",
   },
   barBackground: {
     height: 8,

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { ScrollView, View, StyleSheet, Pressable } from "react-native";
+import { ScrollView, View, StyleSheet, Pressable, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -7,13 +7,12 @@ import { useQuery } from "@tanstack/react-query";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius } from "@/constants/theme";
+import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { ThemedText } from "@/components/ThemedText";
 import { CategoryBar } from "@/components/CategoryBar";
 import { SectionHeader } from "@/components/SectionHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { SkeletonLoader } from "@/components/SkeletonLoader";
-import { Card } from "@/components/Card";
 import { formatCurrency, getMonthName, getCategoryLabel, getCategoryColor } from "@/lib/formatters";
 import type { Transaction } from "@shared/schema";
 
@@ -48,7 +47,7 @@ export default function InsightsScreen() {
       result.push({
         month: date.getMonth() + 1,
         year: date.getFullYear(),
-        label: getMonthName(date.getMonth() + 1),
+        label: getMonthName(date.getMonth() + 1).substring(0, 3),
       });
     }
     return result;
@@ -86,7 +85,7 @@ export default function InsightsScreen() {
         .reduce((sum, t) => sum + parseFloat(t.amount), 0);
       
       weeks.push({
-        label: `Sem ${weekNum}`,
+        label: `S${weekNum}`,
         amount: weekTotal,
       });
       
@@ -113,7 +112,7 @@ export default function InsightsScreen() {
         <EmptyState
           image={emptyInsightsImage}
           title="Sin datos suficientes"
-          message="Aún no tenemos suficientes transacciones para mostrarte información. Sincroniza tus correos bancarios para comenzar."
+          message="Aún no tenemos suficientes movimientos para mostrarte información. Sincroniza tus correos bancarios para comenzar."
         />
       </ScrollView>
     );
@@ -147,7 +146,7 @@ export default function InsightsScreen() {
               style={[
                 styles.monthChip,
                 {
-                  backgroundColor: isSelected ? theme.primary : theme.backgroundSecondary,
+                  backgroundColor: isSelected ? theme.accent : theme.backgroundSecondary,
                 },
               ]}
             >
@@ -166,13 +165,13 @@ export default function InsightsScreen() {
 
       {isLoading ? (
         <View>
-          <SkeletonLoader height={120} style={{ marginBottom: Spacing.xl }} />
-          <SkeletonLoader height={200} />
+          <SkeletonLoader height={140} borderRadius={BorderRadius.md} style={{ marginBottom: Spacing.xl }} />
+          <SkeletonLoader height={180} borderRadius={BorderRadius.md} />
         </View>
       ) : (
         <>
           <Animated.View entering={FadeInDown.duration(400).delay(100)}>
-            <Card style={styles.summaryCard}>
+            <View style={[styles.summaryCard, { backgroundColor: theme.backgroundDefault }, !isDark && Shadows.card]}>
               <View style={styles.summaryRow}>
                 <View style={styles.summaryItem}>
                   <ThemedText style={[styles.summaryLabel, { color: theme.textSecondary }]}>
@@ -191,10 +190,10 @@ export default function InsightsScreen() {
                   </ThemedText>
                 </View>
               </View>
-              <View style={[styles.divider, { backgroundColor: theme.border }]} />
+              <View style={[styles.divider, { backgroundColor: theme.separator }]} />
               <View style={styles.balanceRow}>
                 <ThemedText style={[styles.summaryLabel, { color: theme.textSecondary }]}>
-                  Balance
+                  Balance del mes
                 </ThemedText>
                 <ThemedText
                   style={[
@@ -210,14 +209,14 @@ export default function InsightsScreen() {
                   {formatCurrency((stats?.income || 0) - (stats?.expenses || 0))}
                 </ThemedText>
               </View>
-            </Card>
+            </View>
           </Animated.View>
 
           {weeklyData.length > 0 ? (
             <>
               <SectionHeader title="Tendencia Semanal" />
               <Animated.View entering={FadeInDown.duration(400).delay(200)}>
-                <Card style={styles.chartCard}>
+                <View style={[styles.chartCard, { backgroundColor: theme.backgroundDefault }, !isDark && Shadows.card]}>
                   <View style={styles.barsContainer}>
                     {weeklyData.map((week, index) => (
                       <View key={week.label} style={styles.barColumn}>
@@ -226,8 +225,8 @@ export default function InsightsScreen() {
                             style={[
                               styles.bar,
                               {
-                                height: `${(week.amount / maxWeekAmount) * 100}%`,
-                                backgroundColor: theme.primary,
+                                height: `${Math.max((week.amount / maxWeekAmount) * 100, 5)}%`,
+                                backgroundColor: theme.accent,
                               },
                             ]}
                           />
@@ -238,7 +237,7 @@ export default function InsightsScreen() {
                       </View>
                     ))}
                   </View>
-                </Card>
+                </View>
               </Animated.View>
             </>
           ) : null}
@@ -277,13 +276,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.full,
+    minWidth: 56,
+    alignItems: "center",
   },
   monthChipText: {
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: "600",
   },
   summaryCard: {
-    marginBottom: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.xl,
+    marginBottom: Spacing.md,
   },
   summaryRow: {
     flexDirection: "row",
@@ -296,11 +299,11 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
   },
   summaryValue: {
-    fontSize: 20,
-    fontWeight: "600",
+    fontSize: 22,
+    fontWeight: "700",
   },
   divider: {
-    height: 1,
+    height: StyleSheet.hairlineWidth,
     marginVertical: Spacing.lg,
   },
   balanceRow: {
@@ -313,7 +316,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   chartCard: {
-    padding: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.xl,
   },
   barsContainer: {
     flexDirection: "row",
@@ -326,16 +330,17 @@ const styles = StyleSheet.create({
   },
   barWrapper: {
     flex: 1,
-    width: 24,
+    width: 28,
     justifyContent: "flex-end",
     marginBottom: Spacing.sm,
   },
   bar: {
     width: "100%",
-    borderRadius: 4,
-    minHeight: 4,
+    borderRadius: 6,
+    minHeight: 6,
   },
   barLabel: {
-    fontSize: 11,
+    fontSize: 12,
+    fontWeight: "500",
   },
 });

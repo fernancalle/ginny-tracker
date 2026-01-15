@@ -25,7 +25,7 @@ export default function MainTabNavigator() {
     <Tab.Navigator
       initialRouteName="OverviewTab"
       screenOptions={{
-        tabBarActiveTintColor: theme.tabIconSelected,
+        tabBarActiveTintColor: theme.accent,
         tabBarInactiveTintColor: theme.tabIconDefault,
         tabBarStyle: {
           position: "absolute",
@@ -45,15 +45,19 @@ export default function MainTabNavigator() {
             />
           ) : null,
         headerShown: false,
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: "500",
+        },
       }}
     >
       <Tab.Screen
         name="OverviewTab"
         component={OverviewStackNavigator}
         options={{
-          title: "Overview",
+          title: "Inicio",
           tabBarIcon: ({ color, size }) => (
-            <Feather name="pie-chart" size={size} color={color} />
+            <Feather name="home" size={size} color={color} />
           ),
         }}
       />
@@ -61,7 +65,7 @@ export default function MainTabNavigator() {
         name="TransactionsTab"
         component={TransactionsStackNavigator}
         options={{
-          title: "Transactions",
+          title: "Movimientos",
           tabBarIcon: ({ color, size }) => (
             <Feather name="list" size={size} color={color} />
           ),
@@ -71,9 +75,9 @@ export default function MainTabNavigator() {
         name="InsightsTab"
         component={InsightsStackNavigator}
         options={{
-          title: "Insights",
+          title: "Análisis",
           tabBarIcon: ({ color, size }) => (
-            <Feather name="trending-up" size={size} color={color} />
+            <Feather name="bar-chart-2" size={size} color={color} />
           ),
         }}
       />
@@ -81,7 +85,7 @@ export default function MainTabNavigator() {
         name="ProfileTab"
         component={ProfileStackNavigator}
         options={{
-          title: "Profile",
+          title: "Perfil",
           tabBarIcon: ({ color, size }) => (
             <Feather name="user" size={size} color={color} />
           ),

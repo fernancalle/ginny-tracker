@@ -1,7 +1,6 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import OverviewScreen from "@/screens/OverviewScreen";
-import { HeaderTitle } from "@/components/HeaderTitle";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 
 export type OverviewStackParamList = {
@@ -19,7 +18,7 @@ export default function OverviewStackNavigator() {
         name="Overview"
         component={OverviewScreen}
         options={{
-          headerTitle: () => <HeaderTitle title="Ginny" />,
+          headerShown: false,
         }}
       />
     </Stack.Navigator>

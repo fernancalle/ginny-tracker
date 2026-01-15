@@ -1,5 +1,5 @@
-import React, { useCallback } from "react";
-import { FlatList, View, StyleSheet, RefreshControl } from "react-native";
+import React, { useCallback, useState } from "react";
+import { ScrollView, View, StyleSheet, RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -10,15 +10,17 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing } from "@/constants/theme";
-import { BalanceCard } from "@/components/BalanceCard";
+import { ThemedText } from "@/components/ThemedText";
+import { BalanceCard, QuickStats, FinancialSummary } from "@/components/BalanceCard";
 import { TransactionItem } from "@/components/TransactionItem";
 import { SectionHeader } from "@/components/SectionHeader";
 import { CategoryBar } from "@/components/CategoryBar";
 import { EmptyState } from "@/components/EmptyState";
+import { SegmentedControl } from "@/components/SegmentedControl";
 import { BalanceCardSkeleton, TransactionSkeleton } from "@/components/SkeletonLoader";
 import { apiRequest } from "@/lib/query-client";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
-import type { Transaction } from "@shared/schema";
+import type { Transaction, User } from "@shared/schema";
 
 import emptyTransactionsImage from "../../assets/images/empty-transactions.png";
 
@@ -31,6 +33,11 @@ export default function OverviewScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<NavigationProp>();
   const queryClient = useQueryClient();
+  const [periodIndex, setPeriodIndex] = useState(0);
+
+  const { data: user } = useQuery<User>({
+    queryKey: ["/api/user"],
+  });
 
   const { data: transactions, isLoading: loadingTransactions } = useQuery<Transaction[]>({
     queryKey: ["/api/transactions"],
@@ -72,6 +79,10 @@ export default function OverviewScreen() {
     syncMutation.mutate();
   }, []);
 
+  const handleLoadDemo = useCallback(() => {
+    loadDemoMutation.mutate();
+  }, []);
+
   const handleTransactionPress = (transaction: Transaction) => {
     navigation.navigate("TransactionDetail", { transaction });
   };
@@ -84,102 +95,140 @@ export default function OverviewScreen() {
   const income = stats?.income || 0;
   const expenses = stats?.expenses || 0;
   const balance = income - expenses;
-
   const totalExpenses = categories?.reduce((sum, c) => sum + c.total, 0) || 0;
-
   const isLoading = loadingTransactions || loadingStats;
+  const userName = user?.name || "Usuario";
 
-  const renderHeader = () => (
-    <View>
-      {isLoading ? (
-        <BalanceCardSkeleton />
-      ) : (
-        <Animated.View entering={FadeInDown.duration(400).delay(100)}>
-          <BalanceCard balance={balance} income={income} expenses={expenses} />
-        </Animated.View>
-      )}
-
-      {categories && categories.length > 0 ? (
-        <>
-          <SectionHeader title="Gastos por Categoría" />
-          <Animated.View entering={FadeInDown.duration(400).delay(200)}>
-            {categories.slice(0, 4).map((cat) => (
-              <CategoryBar
-                key={cat.category}
-                category={cat.category}
-                amount={cat.total}
-                percentage={(cat.total / totalExpenses) * 100}
-              />
-            ))}
-          </Animated.View>
-        </>
-      ) : null}
-
-      <SectionHeader
-        title="Transacciones Recientes"
-        actionLabel={recentTransactions.length > 0 ? "Ver todas" : undefined}
-        onAction={handleSeeAllTransactions}
-      />
-    </View>
-  );
-
-  const handleLoadDemo = useCallback(() => {
-    loadDemoMutation.mutate();
-  }, []);
-
-  const renderEmpty = () => {
-    if (isLoading || loadDemoMutation.isPending) {
-      return (
-        <View>
-          {[1, 2, 3].map((i) => (
-            <TransactionSkeleton key={i} />
-          ))}
-        </View>
-      );
-    }
-
+  if (!isLoading && (!transactions || transactions.length === 0)) {
     return (
-      <EmptyState
-        image={emptyTransactionsImage}
-        title="Sin transacciones"
-        message="Sincroniza tus correos bancarios o carga datos de demostración para ver cómo funciona Ginny."
-        actionLabel="Cargar demo"
-        onAction={handleLoadDemo}
-      />
+      <ScrollView
+        style={{ flex: 1, backgroundColor: theme.backgroundRoot }}
+        contentContainerStyle={{
+          paddingTop: headerHeight + Spacing.xl,
+          paddingBottom: tabBarHeight + Spacing.xl,
+          paddingHorizontal: Spacing.lg,
+          flexGrow: 1,
+        }}
+        refreshControl={
+          <RefreshControl
+            refreshing={syncMutation.isPending || loadDemoMutation.isPending}
+            onRefresh={handleRefresh}
+            tintColor={theme.accent}
+          />
+        }
+      >
+        <ThemedText type="h1" style={styles.greeting}>
+          Hola, {userName}
+        </ThemedText>
+        <EmptyState
+          image={emptyTransactionsImage}
+          title="Sin transacciones"
+          message="Sincroniza tus correos bancarios o carga datos de demostración para comenzar."
+          actionLabel="Cargar demo"
+          onAction={handleLoadDemo}
+        />
+      </ScrollView>
     );
-  };
+  }
 
   return (
-    <FlatList
+    <ScrollView
       style={{ flex: 1, backgroundColor: theme.backgroundRoot }}
       contentContainerStyle={{
         paddingTop: headerHeight + Spacing.xl,
         paddingBottom: tabBarHeight + Spacing.xl,
         paddingHorizontal: Spacing.lg,
-        flexGrow: 1,
       }}
       scrollIndicatorInsets={{ bottom: insets.bottom }}
-      data={recentTransactions}
-      keyExtractor={(item) => item.id}
-      renderItem={({ item, index }) => (
-        <Animated.View entering={FadeInDown.duration(300).delay(300 + index * 50)}>
-          <TransactionItem
-            transaction={item}
-            onPress={() => handleTransactionPress(item)}
-          />
-        </Animated.View>
-      )}
-      ListHeaderComponent={renderHeader}
-      ListEmptyComponent={renderEmpty}
       refreshControl={
         <RefreshControl
           refreshing={syncMutation.isPending}
           onRefresh={handleRefresh}
-          tintColor={theme.primary}
+          tintColor={theme.accent}
         />
       }
-    />
+    >
+      <ThemedText type="h1" style={styles.greeting}>
+        Hola, {userName}
+      </ThemedText>
+
+      <Animated.View entering={FadeInDown.duration(400).delay(50)}>
+        <SegmentedControl
+          segments={["Último mes", "Año en curso"]}
+          selectedIndex={periodIndex}
+          onChange={setPeriodIndex}
+        />
+      </Animated.View>
+
+      <View style={styles.balanceSection}>
+        {isLoading ? (
+          <BalanceCardSkeleton />
+        ) : (
+          <BalanceCard balance={balance} />
+        )}
+      </View>
+
+      {!isLoading ? (
+        <>
+          <Animated.View entering={FadeInDown.duration(400).delay(150)}>
+            <FinancialSummary income={income} expenses={expenses} />
+          </Animated.View>
+
+          <Animated.View entering={FadeInDown.duration(400).delay(200)}>
+            <SectionHeader title="Ingresos y Gastos" showInfo />
+            <QuickStats income={income} expenses={expenses} />
+          </Animated.View>
+
+          {categories && categories.length > 0 ? (
+            <Animated.View entering={FadeInDown.duration(400).delay(250)}>
+              <SectionHeader title="Top 3 Categorías" showInfo />
+              {categories.slice(0, 3).map((cat) => (
+                <CategoryBar
+                  key={cat.category}
+                  category={cat.category}
+                  amount={cat.total}
+                  percentage={(cat.total / totalExpenses) * 100}
+                />
+              ))}
+            </Animated.View>
+          ) : null}
+
+          {recentTransactions.length > 0 ? (
+            <Animated.View entering={FadeInDown.duration(400).delay(300)}>
+              <SectionHeader
+                title="Movimientos Recientes"
+                actionLabel="Ver todos"
+                onAction={handleSeeAllTransactions}
+              />
+              {recentTransactions.map((txn, index) => (
+                <TransactionItem
+                  key={txn.id}
+                  transaction={txn}
+                  onPress={() => handleTransactionPress(txn)}
+                />
+              ))}
+            </Animated.View>
+          ) : null}
+        </>
+      ) : (
+        <View style={styles.skeletonContainer}>
+          {[1, 2, 3].map((i) => (
+            <TransactionSkeleton key={i} />
+          ))}
+        </View>
+      )}
+    </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  greeting: {
+    marginBottom: Spacing.xl,
+  },
+  balanceSection: {
+    marginTop: Spacing.xl,
+  },
+  skeletonContainer: {
+    marginTop: Spacing["2xl"],
+  },
+});
