@@ -3,12 +3,16 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { Platform, StyleSheet } from "react-native";
-import HomeStackNavigator from "@/navigation/HomeStackNavigator";
+import OverviewStackNavigator from "@/navigation/OverviewStackNavigator";
+import TransactionsStackNavigator from "@/navigation/TransactionsStackNavigator";
+import InsightsStackNavigator from "@/navigation/InsightsStackNavigator";
 import ProfileStackNavigator from "@/navigation/ProfileStackNavigator";
 import { useTheme } from "@/hooks/useTheme";
 
 export type MainTabParamList = {
-  HomeTab: undefined;
+  OverviewTab: undefined;
+  TransactionsTab: undefined;
+  InsightsTab: undefined;
   ProfileTab: undefined;
 };
 
@@ -19,7 +23,7 @@ export default function MainTabNavigator() {
 
   return (
     <Tab.Navigator
-      initialRouteName="HomeTab"
+      initialRouteName="OverviewTab"
       screenOptions={{
         tabBarActiveTintColor: theme.tabIconSelected,
         tabBarInactiveTintColor: theme.tabIconDefault,
@@ -44,12 +48,32 @@ export default function MainTabNavigator() {
       }}
     >
       <Tab.Screen
-        name="HomeTab"
-        component={HomeStackNavigator}
+        name="OverviewTab"
+        component={OverviewStackNavigator}
         options={{
-          title: "Home",
+          title: "Overview",
           tabBarIcon: ({ color, size }) => (
-            <Feather name="home" size={size} color={color} />
+            <Feather name="pie-chart" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="TransactionsTab"
+        component={TransactionsStackNavigator}
+        options={{
+          title: "Transactions",
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="list" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="InsightsTab"
+        component={InsightsStackNavigator}
+        options={{
+          title: "Insights",
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="trending-up" size={size} color={color} />
           ),
         }}
       />

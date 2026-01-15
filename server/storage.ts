@@ -1,38 +1,148 @@
-import { type User, type InsertUser } from "@shared/schema";
-import { randomUUID } from "crypto";
-
-// modify the interface with any CRUD methods
-// you might need
+import { 
+  users, 
+  transactions, 
+  emailSyncStatus,
+  type User, 
+  type InsertUser, 
+  type Transaction,
+  type InsertTransaction,
+  type EmailSyncStatus 
+} from "@shared/schema";
+import { db } from "./db";
+import { eq, desc, and, gte, lte, sql } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  
+  getTransactions(userId: string): Promise<Transaction[]>;
+  getTransactionsByDateRange(userId: string, startDate: Date, endDate: Date): Promise<Transaction[]>;
+  createTransaction(transaction: InsertTransaction): Promise<Transaction>;
+  getTransactionByEmailId(emailId: string): Promise<Transaction | undefined>;
+  
+  getEmailSyncStatus(userId: string): Promise<EmailSyncStatus | undefined>;
+  updateEmailSyncStatus(userId: string, syncedCount: number): Promise<void>;
+  
+  getMonthlyStats(userId: string, year: number, month: number): Promise<{ income: number; expenses: number }>;
+  getCategoryBreakdown(userId: string, year: number, month: number): Promise<{ category: string; total: number }[]>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-
-  constructor() {
-    this.users = new Map();
-  }
-
+export class DatabaseStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
+  }
+
+  async getTransactions(userId: string): Promise<Transaction[]> {
+    return db
+      .select()
+      .from(transactions)
+      .where(eq(transactions.userId, userId))
+      .orderBy(desc(transactions.transactionDate));
+  }
+
+  async getTransactionsByDateRange(userId: string, startDate: Date, endDate: Date): Promise<Transaction[]> {
+    return db
+      .select()
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.userId, userId),
+          gte(transactions.transactionDate, startDate),
+          lte(transactions.transactionDate, endDate)
+        )
+      )
+      .orderBy(desc(transactions.transactionDate));
+  }
+
+  async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
+    const [created] = await db.insert(transactions).values(transaction).returning();
+    return created;
+  }
+
+  async getTransactionByEmailId(emailId: string): Promise<Transaction | undefined> {
+    const [txn] = await db
+      .select()
+      .from(transactions)
+      .where(eq(transactions.emailId, emailId));
+    return txn || undefined;
+  }
+
+  async getEmailSyncStatus(userId: string): Promise<EmailSyncStatus | undefined> {
+    const [status] = await db
+      .select()
+      .from(emailSyncStatus)
+      .where(eq(emailSyncStatus.userId, userId));
+    return status || undefined;
+  }
+
+  async updateEmailSyncStatus(userId: string, syncedCount: number): Promise<void> {
+    const existing = await this.getEmailSyncStatus(userId);
+    if (existing) {
+      await db
+        .update(emailSyncStatus)
+        .set({ lastSyncAt: new Date(), syncedEmailCount: syncedCount })
+        .where(eq(emailSyncStatus.userId, userId));
+    } else {
+      await db.insert(emailSyncStatus).values({
+        userId,
+        lastSyncAt: new Date(),
+        syncedEmailCount: syncedCount,
+      });
+    }
+  }
+
+  async getMonthlyStats(userId: string, year: number, month: number): Promise<{ income: number; expenses: number }> {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59);
+    
+    const txns = await this.getTransactionsByDateRange(userId, startDate, endDate);
+    
+    let income = 0;
+    let expenses = 0;
+    
+    for (const txn of txns) {
+      const amount = parseFloat(txn.amount);
+      if (txn.type === 'income') {
+        income += amount;
+      } else {
+        expenses += amount;
+      }
+    }
+    
+    return { income, expenses };
+  }
+
+  async getCategoryBreakdown(userId: string, year: number, month: number): Promise<{ category: string; total: number }[]> {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59);
+    
+    const txns = await this.getTransactionsByDateRange(userId, startDate, endDate);
+    
+    const categoryTotals: Record<string, number> = {};
+    
+    for (const txn of txns) {
+      if (txn.type === 'expense') {
+        const amount = parseFloat(txn.amount);
+        categoryTotals[txn.category] = (categoryTotals[txn.category] || 0) + amount;
+      }
+    }
+    
+    return Object.entries(categoryTotals)
+      .map(([category, total]) => ({ category, total }))
+      .sort((a, b) => b.total - a.total);
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();

@@ -1,12 +1,13 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import MainTabNavigator from "@/navigation/MainTabNavigator";
-import ModalScreen from "@/screens/ModalScreen";
+import TransactionDetailScreen from "@/screens/TransactionDetailScreen";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
+import type { Transaction } from "@shared/schema";
 
 export type RootStackParamList = {
   Main: undefined;
-  Modal: undefined;
+  TransactionDetail: { transaction: Transaction };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -22,11 +23,11 @@ export default function RootStackNavigator() {
         options={{ headerShown: false }}
       />
       <Stack.Screen
-        name="Modal"
-        component={ModalScreen}
+        name="TransactionDetail"
+        component={TransactionDetailScreen}
         options={{
           presentation: "modal",
-          headerTitle: "Modal",
+          headerTitle: "Transaction Details",
         }}
       />
     </Stack.Navigator>
